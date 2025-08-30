@@ -8,10 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.david.springboot.backend.backend_products.entities.Product;
 import com.david.springboot.backend.backend_products.repositories.ProductRepository;
-//import com.fasterxml.jackson.databind.ObjectMapper;
-//import com.fasterxml.jackson.databind.DeserializationFeature;
-
-//@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @CrossOrigin(origins = {"http://localhost:3000"})
 @RequestMapping("/api/products")
@@ -35,14 +31,8 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createProduct(@RequestBody Product product/*String jsonPayload*/) {
+    public ResponseEntity<?> createProduct(@RequestBody Product product) {
       try{
-        System.out.println("===Crear producto - datos recibidos===");
-        System.out.println("name: " + product.getName());
-        System.out.println("price: " + product.getPrice());
-        System.out.println("quantity: " + product.getQuantity());
-        System.out.println("description: " + product.getDescription());
-        System.out.println("=================================");
 
         //validaciones
         if(product.getName() == null || product.getName().trim().isEmpty()) {
@@ -61,8 +51,9 @@ public class ProductController {
         System.out.println("Producto creado con éxito: " + savedPro.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedPro);
 
-      }catch(Exception e){
+      }catch(Exception e){/*
           System.err.println("Error al crear producto: " + e.getMessage());
+      */
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error interno del servidor: " + e.getMessage());
@@ -70,14 +61,8 @@ public class ProductController {
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<?> updateProduct(@PathVariable Long id, @RequestBody Product product/*String jsonPayload*/) {
+    public ResponseEntity<?> updateProduct(@PathVariable Long id, @RequestBody Product product) {
        try{
-        System.out.println("=== ACTUALIZAR PRODUCTO - JSON RECIBIDO ===");
-        System.out.println("id:" + id);
-        System.out.println("Name:" + product.getName());
-        System.out.println("Price:" + product.getPrice());
-        System.out.println("Quantity:" + product.getQuantity());
-        System.out.println("Description:" + product.getDescription());
 
         Optional<Product> existingProductOpt = productRepo.findById(id);
         if(!existingProductOpt.isPresent()) return ResponseEntity.notFound().build();
@@ -102,7 +87,6 @@ public class ProductController {
         return ResponseEntity.ok(updatedProduct);
 
        }catch(Exception e){
-           System.err.println("Error al actualizar producto: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error interno del servidor: " + e.getMessage());
