@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.david.springboot.backend.backend_products.entities.Product;
 import com.david.springboot.backend.backend_products.repositories.ProductRepository;
+
 @RestController
 @CrossOrigin(origins = {"http://localhost:3000"})
 @RequestMapping("/api/products")

@@ -4,11 +4,13 @@ import com.david.springboot.backend.backend_products.services.UserService;
 
 import java.util.*;
 
+//import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import com.david.springboot.backend.backend_products.SecurityConfig.DataConfig;
+import com.david.springboot.backend.backend_products.SecurityConfig.JwtAuthFilter;
 import com.david.springboot.backend.backend_products.entities.User;
 
 @RestController
@@ -21,6 +23,9 @@ public class AuthController {
 
     @Autowired
     private DataConfig dataConfig;
+
+    @Autowired
+    private JwtAuthFilter jwtAuthFilter;
 
     // Endpoint for user registration
     @PostMapping("/register")
@@ -63,7 +68,8 @@ public class AuthController {
             // lógica de autenticación
             Optional<User> user = userService.authenticate(credentials.getUsername(), credentials.getPassword());
             if (user.isPresent()) {
-                String token = dataConfig.generateToken(user.get().getUsername());
+                //necesito guardar el usuario en el token
+                String token = jwtAuthFilter.generateToken(user.get().getUsername());
                 System.out.println("Login exitoso para usuario: " + credentials.getUsername());
                 return ResponseEntity.ok(Map.of("token", token));
             } else {
