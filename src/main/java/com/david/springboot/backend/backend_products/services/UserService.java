@@ -23,8 +23,8 @@ public class UserService {
         return userRepo.save(user);
     }
 
-    public Optional<User> authenticate(String username, String password) {
-        return userRepo.findByUsername(username)
+    public Optional<User> authenticate(String email, String password) {
+        return userRepo.findByEmail(email)
                 .filter(user -> passwordEncoder.matches(password, user.getPassword()));
     }
 }

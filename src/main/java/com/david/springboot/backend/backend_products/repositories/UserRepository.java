@@ -12,5 +12,6 @@ import com.david.springboot.backend.backend_products.entities.User;
 @RepositoryRestResource(path = "user")
 public interface UserRepository extends JpaRepository<User, Long> {
     // La interfaz extiende CrudRepository, proporcionando métodos CRUD para la entidad User con clave primaria de tipo Long.
-    Optional<User> findByUsername(String username);
+    /* Optional<User> findByUsername(String username); */
+    Optional<User> findByEmail(String email);
 }
