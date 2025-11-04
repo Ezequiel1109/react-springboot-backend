@@ -1,22 +1,16 @@
 package com.david.springboot.backend.backend_products;
 
 import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.mockito.ArgumentMatchers.anyString;
-
-import org.junit.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.Before;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -24,7 +18,7 @@ import com.david.springboot.backend.backend_products.entities.User;
 import com.david.springboot.backend.backend_products.repositories.UserRepository;
 import com.david.springboot.backend.backend_products.services.UserService;
 
-@ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
+@ExtendWith(MockitoExtension.class)
 class UserServicesTest {
     @Mock
     private UserRepository userRepository;
@@ -35,13 +29,14 @@ class UserServicesTest {
     @InjectMocks
     private UserService userService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
+       
     }
 
     @Test
-    public void testRegisterUserAndReturnSaved(){
+    @DisplayName("Test que registra al usuario y devuelve el usuario guardado")
+    void testRegisterUserAndReturnSaved(){
         // Implementar el test para el método register del UserService
         User toSave = new User();
         toSave.setUsername("testuser");
@@ -54,7 +49,7 @@ class UserServicesTest {
         saved.setEmail("testuser@example.com");
 
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
-        when(userRepository.save(toSave)).thenReturn(saved);
+        when(userRepository.save(any(User.class))).thenReturn(saved);
 
         User rUser = userService.register(toSave);
         assertNotNull(rUser);
@@ -65,7 +60,8 @@ class UserServicesTest {
     }
 
     @Test
-    public void test_registerDuplicateEamil_shouldThrowDataIntegrityViolationException() {
+    @DisplayName("Test que registra un email duplicado y lanza una excepción")
+    void test_registerDuplicateEamil_shouldThrowDataIntegrityViolationException() {
         // Implementar el test para el caso de email duplicado
         User toSave = new User();
         toSave.setUsername("testuser");
@@ -80,7 +76,8 @@ class UserServicesTest {
     }
 
     @Test
-    public void test_authenticateExistingCredentials_shouldReturnUser(){
+    @DisplayName("Test que autentica credenciales existentes y devuelve el usuario")
+    void test_authenticateExistingCredentials_shouldReturnUser(){
         // Implementar el test para el método authenticate del UserService
         String email = "testuser@example.com";
         String password = "password123";
@@ -99,7 +96,8 @@ class UserServicesTest {
     }
 
     @Test
-    public void test_authenticate_wrongCredentials_shouldReturnEmpty(){
+    @DisplayName("Test que autentica credenciales incorrectas y devuelve vacío")
+    void test_authenticate_wrongCredentials_shouldReturnEmpty(){
         // Implementar el test para el método authenticate del UserService con credenciales incorrectas
         String email = "testuser@example.com";
         String password = "wrongPassword";

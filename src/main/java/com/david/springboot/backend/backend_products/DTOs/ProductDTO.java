@@ -1,11 +1,16 @@
 package com.david.springboot.backend.backend_products.DTOs;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Id;
 import jakarta.validation.constraints.*;
 
 @Schema(description = "Data Transfer Object para crear o actualizar un producto", example = "{ \"name\": \"Laptop\", \"price\": 999.99, \"quantity\": 10, \"description\": \"Laptop de alta gama\" }")
 
 public class ProductDTO {
+
+    @Id
+    private Long id;
+
     @NotBlank(message = "El nombre es obligatorio")
     @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
     @Schema(description = "Nombre del producto", example = "Laptop", maxLength = 100, required = true)
@@ -32,14 +37,22 @@ public class ProductDTO {
     }
 
     public ProductDTO(
+            Long id,
             String name,
             Long price,
             Long quantity,
             String description) {
+        this.id = id;
         this.name = name;
         this.price = price;
         this.quantity = quantity;
         this.description = description;
+    }
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {
