@@ -8,10 +8,12 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.david.springboot.backend.backend_products.entities.User;
 
-@CrossOrigin(origins = {"http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:3000" })
 @RepositoryRestResource(path = "user")
 public interface UserRepository extends JpaRepository<User, Long> {
-    // La interfaz extiende CrudRepository, proporcionando métodos CRUD para la entidad User con clave primaria de tipo Long.
-    /* Optional<User> findByUsername(String username); */
+    // La interfaz extiende CrudRepository, proporcionando métodos CRUD para la
+    // entidad User con clave primaria de tipo Long.
+    Optional<User> findByUsername(String username);
+
     Optional<User> findByEmail(String email);
 }

@@ -1,0 +1,29 @@
+# Dockerfile para ejecutar tests
+FROM openjdk:21-jdk-slim
+
+# Instalar Maven
+RUN apt-get update && \
+    apt-get install -y maven && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de configuración de Maven
+COPY pom.xml .
+COPY mvnw .
+COPY mvnw.cmd .
+COPY .mvn .mvn
+
+# Descargar dependencias (para cache de Docker)
+RUN mvn dependency:go-offline -B
+
+# Copiar código fuente
+COPY src ./src
+
+# Exponer puerto para reportes (opcional)
+EXPOSE 8080
+
+# Comando por defecto: ejecutar todos los tests
+CMD ["mvn", "test"]

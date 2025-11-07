@@ -1,5 +1,7 @@
 package com.david.springboot.backend.backend_products.repositories;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,9 +10,19 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.david.springboot.backend.backend_products.entities.Product;
 
-@CrossOrigin(origins = {"http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:3000" })
 @RepositoryRestResource(path = "products")
 public interface ProductRepository extends JpaRepository<Product, Long> {
- // La interfaz extiende JpaRepository, proporcionando métodos CRUD para la entidad Product con clave primaria de tipo Long.
- Page<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    // La interfaz extiende JpaRepository, proporcionando métodos CRUD para la
+    // entidad Product con clave primaria de tipo Long.
+    Page<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
+    // Métodos de consulta para Testcontainers
+    List<Product> findByPriceGreaterThan(Long price);
+
+    List<Product> findByPriceLessThan(Long price);
+
+    List<Product> findByQuantityLessThan(Long quantity);
+
+    List<Product> findByQuantityGreaterThan(Long quantity);
 }

@@ -31,12 +31,12 @@ class UserServicesTest {
 
     @BeforeEach
     public void setUp() {
-       
+
     }
 
     @Test
     @DisplayName("Test que registra al usuario y devuelve el usuario guardado")
-    void testRegisterUserAndReturnSaved(){
+    void testRegisterUserAndReturnSaved() {
         // Implementar el test para el método register del UserService
         User toSave = new User();
         toSave.setUsername("testuser");
@@ -56,7 +56,7 @@ class UserServicesTest {
         assertEquals(Long.valueOf(1L), rUser.getId());
         verify(userRepository, times(1)).save(any(User.class));
         verify(passwordEncoder, times(1)).encode("password123");
-        
+
     }
 
     @Test
@@ -69,15 +69,17 @@ class UserServicesTest {
         toSave.setPassword("password123");
 
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
-        when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("Duplicate entry 'testuser@example.com'"));
+        when(userRepository.save(any(User.class)))
+                .thenThrow(new DataIntegrityViolationException("Duplicate entry 'testuser@example.com'"));
 
-        DataIntegrityViolationException ex = assertThrows(DataIntegrityViolationException.class, () -> userService.register(toSave));
+        DataIntegrityViolationException ex = assertThrows(DataIntegrityViolationException.class,
+                () -> userService.register(toSave));
         assertTrue(ex.getMessage().contains("Duplicate entry 'testuser@example.com'"));
     }
 
     @Test
     @DisplayName("Test que autentica credenciales existentes y devuelve el usuario")
-    void test_authenticateExistingCredentials_shouldReturnUser(){
+    void test_authenticateExistingCredentials_shouldReturnUser() {
         // Implementar el test para el método authenticate del UserService
         String email = "testuser@example.com";
         String password = "password123";
@@ -89,7 +91,7 @@ class UserServicesTest {
         when(userRepository.findByEmail(eq(email))).thenReturn(Optional.of(existingUser));
         when(passwordEncoder.matches(eq(password), eq(existingUser.getPassword()))).thenReturn(true);
 
-        Optional<User> result =userService.authenticate(email, password);
+        Optional<User> result = userService.authenticate(email, password);
         assertTrue(result.isPresent());
         assertEquals(email, result.get().getEmail());
         verify(userRepository, times(1)).findByEmail(email);
@@ -97,8 +99,9 @@ class UserServicesTest {
 
     @Test
     @DisplayName("Test que autentica credenciales incorrectas y devuelve vacío")
-    void test_authenticate_wrongCredentials_shouldReturnEmpty(){
-        // Implementar el test para el método authenticate del UserService con credenciales incorrectas
+    void test_authenticate_wrongCredentials_shouldReturnEmpty() {
+        // Implementar el test para el método authenticate del UserService con
+        // credenciales incorrectas
         String email = "testuser@example.com";
         String password = "wrongPassword";
 
