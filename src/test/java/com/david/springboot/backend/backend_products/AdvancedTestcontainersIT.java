@@ -160,7 +160,8 @@ class AdvancedTestcontainersIT {
         keyboard.setPrice(120L);
         keyboard.setQuantity(50L);
 
-        productRepository.saveAll(List.of(laptop, mouse, keyboard));
+        List<Product> products = List.of(laptop, mouse, keyboard);
+        productRepository.saveAll(products);
         System.out.println("📦 Productos creados: " + productRepository.count());
     }
 

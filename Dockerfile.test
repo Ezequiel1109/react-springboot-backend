@@ -16,7 +16,7 @@ COPY mvnw .
 COPY mvnw.cmd .
 COPY .mvn .mvn
 
-# Descargar dependencias (para cache de Docker)
+# Descargar dependencias (para cache de Docker) 
 RUN mvn dependency:go-offline -B
 
 # Copiar código fuente
