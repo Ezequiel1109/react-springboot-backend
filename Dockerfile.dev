@@ -1,0 +1,41 @@
+# Dockerfile para desarrollo con hot-reload usando Spring Boot DevTools
+
+FROM eclipse-temurin:21-jdk-jammy
+
+# Instalar herramientas de desarrollo
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copiar Maven wrapper
+COPY .mvn .mvn
+COPY mvnw .
+COPY pom.xml .
+
+RUN chmod +x mvnw
+
+# Descargar dependencias
+RUN ./mvnw dependency:go-offline -B
+
+# Copiar código fuente
+COPY src ./src
+
+# Variables de entorno para desarrollo
+ENV SPRING_PROFILES_ACTIVE=dev
+ENV SPRING_DEVTOOLS_RESTART_ENABLED=true
+ENV SPRING_JPA_SHOW_SQL=true
+
+EXPOSE 9090
+EXPOSE 5005
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:9090/actuator/health || exit 1
+
+# Ejecutar con DevTools habilitado y debug remoto
+CMD ["./mvnw", "spring-boot:run", "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"]

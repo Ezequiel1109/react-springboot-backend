@@ -1,0 +1,56 @@
+# Multi-stage build para Spring Boot 3 con Java 21
+
+# ============================================
+# Stage 1: Build
+# ============================================
+FROM eclipse-temurin:21-jdk-jammy AS build
+
+#Copiar Maven Wrapper (es ligero de instalar maven)
+COPY .mvn .mvn
+COPY mvnw .
+COPY pom.xml .
+
+# Hacer mvnw ejecutable
+RUN chmod +x mvnw
+
+# Descargar dependencias (layer cacheable)
+RUN ./mvnw dependency:go-offline -B
+
+# Copiar código fuente
+COPY src ./src
+
+# Compilar aplicación (skip tests para producción - se ejecutan en CI/CD)
+RUN ./mvnw clean package -DskipTests
+
+# ============================================
+# ============================================
+# Stage 2: Runtime (solo JRE, más ligera)
+# ============================================
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+
+# Crear usuario no-root por seguridad
+RUN groupadd -r spring && useradd -r -g spring spring
+
+# Copiar JAR desde build stage
+COPY --from=build /app/target/*.jar app.jar
+
+# Cambiar permisos
+RUN chown spring:spring app.jar
+
+# Usar usuario no-root
+USER spring:spring
+
+# Exponer puerto
+EXPOSE 9090
+
+# Variables de entorno
+ENV JAVA_OPTS="-Xmx512m -Xms256m" \
+    SPRING_PROFILES_ACTIVE=prod
+
+# Health check usando Java (no requiere curl)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+  CMD java -cp app.jar org.springframework.boot.loader.JarLauncher --spring.main.web-application-type=none --spring.main.banner-mode=off org.springframework.boot.actuate.health.Health || exit 1
+
+# Comando de inicio
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

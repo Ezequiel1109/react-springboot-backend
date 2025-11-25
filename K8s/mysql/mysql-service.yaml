@@ -1,0 +1,18 @@
+# k8s/mysql-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: react-springboot-products
+  labels:
+    app: mysql
+    tier: database
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+  selector:
+    app: mysql

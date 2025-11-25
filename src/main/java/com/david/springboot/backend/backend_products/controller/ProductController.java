@@ -4,12 +4,14 @@ import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.*;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import com.david.springboot.backend.backend_products.DTOs.PageResponseDTO;
 import com.david.springboot.backend.backend_products.DTOs.ProductDTO;
 import com.david.springboot.backend.backend_products.entities.Product;
 import com.david.springboot.backend.backend_products.repositories.ProductRepository;
@@ -22,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RestController
-@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:8080" })
+@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:64410" })
 @RequestMapping("/api/products")
 
 public class ProductController {
@@ -33,24 +35,26 @@ public class ProductController {
   private static final Logger log = LoggerFactory.getLogger(ProductController.class);
 
   @GetMapping
-  @Operation(summary = "Obtener todos los productos", description = "Recupera una lista de todos los productos disponibles.", responses = {
-      @ApiResponse(responseCode = "200", description = "Lista de productos devuelta exitosamente", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = Product.class)))),
+  @Operation(summary = "Obtener todos los productos paginados", description = "Recupera una lista de todos los productos disponibles.", responses = {
+      @ApiResponse(responseCode = "200", description = "Lista de productos devuelta exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponseDTO.class))),
       @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(mediaType = "application/json"))
   })
-  public ResponseEntity<Page<ProductDTO>> findAll(@RequestParam(required = false) String name,
-      @PageableDefault(size = 20) Pageable pageable) {
-
+  public ResponseEntity<PageResponseDTO<ProductDTO>> findAll(@RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size) {
+        log.info("Request: GET /api/products?page={}&size={}", page, size);
     try {
-    Page<Product> page = (name != null && !name.isBlank())
-        ? productRepo.findByNameContainingIgnoreCase(name, pageable)
-        : productRepo.findAll(pageable);
+      Pageable pageable = PageRequest.of(page, size);
+      Page<Product> productPage = productRepo.findAll(pageable);
+      Page<ProductDTO> dtoPage = productPage.map(this::toDTO);
+      PageResponseDTO<ProductDTO> responseDTO = new PageResponseDTO<>(dtoPage);
 
-    Page<ProductDTO> dtoPage = page.map(this::toDTO);
-    return ResponseEntity.ok(dtoPage);
-  } catch (Exception e) {
-    log.error("Error al obtener productos paginados", e);
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-  }
+      log.info("Productos paginados obtenidos exitosamente: página {}, tamaño {}, total elementos {}",
+          responseDTO.getPageNumber(), responseDTO.getPageSize(), responseDTO.getTotalElements());
+      return ResponseEntity.ok(responseDTO);
+    } catch (Exception e) {
+      log.error("Error al obtener productos paginados", e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
   }
 
   @GetMapping("{id}")
@@ -63,9 +67,14 @@ public class ProductController {
     log.info("Request: GET /api/products/{} - obtener producto por id", id);
     try {
       Optional<Product> productOpt = productRepo.findById(id);
-      return productOpt
-          .map(product -> ResponseEntity.ok(toDTO(product)))
-          .orElse(ResponseEntity.notFound().build());
+      if(productOpt.isPresent()){
+        ProductDTO prodDTO = toDTO(productOpt.get());
+        log.info("Producto obtenido exitosamente: {}", id);
+        return ResponseEntity.ok(prodDTO);
+      }else{
+        log.warn("Producto no encontrado: {}", id);
+        return ResponseEntity.notFound().build();
+      }
     } catch (Exception e) {
       log.error("Error al obtener producto id={}", id, e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -88,11 +97,15 @@ public class ProductController {
     }
     try {
       Product productToCreate = toEntity(productDTO);
+      productToCreate.setId(null);
       Product savedPro = productRepo.save(productToCreate);
       ProductDTO savedProDTO = toDTO(savedPro);
       log.info("Producto creado exitosamente: {}", savedProDTO);
       return ResponseEntity.status(HttpStatus.CREATED).body(savedProDTO);
-    } catch (Exception e) {
+    }catch(ObjectOptimisticLockingFailureException e) {
+      log.error("Conflicto de concurrencia al crear el producto: {}", productDTO, e);
+      return ResponseEntity.status(HttpStatus.CONFLICT).body("Conflicto de concurrencia al crear el producto. Por favor, inténtelo de nuevo.");
+    }catch (Exception e) {
       log.error("Error al crear el producto: {}", productDTO, e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
@@ -117,17 +130,21 @@ public class ProductController {
     try {
       Optional<Product> existingProductOpt = productRepo.findById(id);
       if (!existingProductOpt.isPresent()) {
-        log.warn("Producto no encontrado para actualizarcon ID: {}", id);
+        log.warn("Producto no encontrado para actualizar con ID: {}", id);
         return ResponseEntity.notFound().build();
       }
+
       Product productToUpdate = existingProductOpt.get();
       productToUpdate.setName(productDTO.getName());
       productToUpdate.setPrice(productDTO.getPrice());
       productToUpdate.setQuantity(productDTO.getQuantity());
       productToUpdate.setDescription(productDTO.getDescription());
+
       Product updatedProduct = productRepo.save(productToUpdate);
-      log.info("Producto actualizado exitosamente: {}", updatedProduct);
-      return ResponseEntity.ok(toDTO(updatedProduct));
+      ProductDTO updatedProductDTO = toDTO(updatedProduct);
+      log.info("Producto actualizado exitosamente: {}", id);
+      return ResponseEntity.ok(updatedProductDTO);
+      
     } catch (Exception e) {
       log.error("Error al actualizar el producto con ID {}: {}", id, e.getMessage(), e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -176,7 +193,9 @@ public class ProductController {
     if (dto == null)
       return null;
     Product product = new Product();
-    product.setId(dto.getId());
+    if (dto.getId() != null) {
+      product.setId(dto.getId());
+    }
     product.setName(dto.getName());
     product.setPrice(dto.getPrice());
     product.setQuantity(dto.getQuantity());

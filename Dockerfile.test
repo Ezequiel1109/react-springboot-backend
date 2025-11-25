@@ -1,29 +1,43 @@
 # Dockerfile para ejecutar tests
-FROM openjdk:21-jdk-slim
-
+# FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jdk-jammy
 # Instalar Maven
 RUN apt-get update && \
-    apt-get install -y maven && \
-    apt-get clean && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de configuración de Maven
-COPY pom.xml .
-COPY mvnw .
-COPY mvnw.cmd .
+# Copiar archivos de configuración de Maven wrapper (NO instalar Maven completo)
 COPY .mvn .mvn
+COPY mvnw .
+COPY pom.xml .
 
-# Descargar dependencias (para cache de Docker) 
-RUN mvn dependency:go-offline -B
+# Hacer mvnw ejecutable
+RUN chmod +x mvnw
+
+# Descargar dependencias (layer cacheable)
+RUN ./mvnw dependency:go-offline -B
 
 # Copiar código fuente
 COPY src ./src
 
+# Variables de entorno para tests
+ENV SPRING_PROFILES_ACTIVE=test
+ENV SPRING_DATASOURCE_URL=jdbc:h2:mem:testdb
+ENV SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver
+ENV SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.H2Dialect
+
 # Exponer puerto para reportes (opcional)
-EXPOSE 8080
+EXPOSE 9090
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:9090/actuator/health || exit 1
 
 # Comando por defecto: ejecutar todos los tests
-CMD ["mvn", "test"]
+# CMD ["mvn", "-Dserver.port=9090" ,"test"]
+CMD ["java","-jar","/app/target/backend-products-0.0.1-SNAPSHOT.jar","--server.port=9090"]

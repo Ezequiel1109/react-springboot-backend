@@ -6,20 +6,23 @@ import jakarta.validation.constraints.*;
 @Schema(description = "Data Transfer Object para registrar un usuario", example = "{ \"username\": \"johndoe\", \"email\": \"johndoe@example.com\", \"password\": \"password123\" }")
 
 public class UserDTO {
+
+    private Long id;
+
     @NotBlank(message = "El nombre de usuario es obligatorio")
     @Size(max = 50, message = "El nombre de usuario no puede superar los 50 caracteres")
-    @Schema(description = "Nombre de usuario del usuario", example = "johndoe", maxLength = 50, required = true)
+    @Schema(description = "Nombre de usuario del usuario", example = "johndoe", maxLength = 50, requiredMode = Schema.RequiredMode.REQUIRED)
     private String username;
 
     @NotBlank(message = "El email es obligatorio")
     @Email(message = "El email debe tener un formato válido")
     @Size(max = 100, message = "El email no puede superar los 100 caracteres")
-    @Schema(description = "Email del usuario", example = "johndoe@example.com", maxLength = 100, required = true)
+    @Schema(description = "Email del usuario", example = "johndoe@example.com", maxLength = 100, requiredMode = Schema.RequiredMode.REQUIRED)
     private String email;
 
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 8, max = 100, message = "La contraseña debe tener entre 8 y 100 caracteres")
-    @Schema(description = "Contraseña del usuario", example = "password123", minLength = 8, maxLength = 100, required = true)
+    @Schema(description = "Contraseña del usuario", example = "password123", minLength = 8, maxLength = 100, requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
 
     public UserDTO() {
@@ -29,6 +32,14 @@ public class UserDTO {
         this.username = username;
         this.email = email;
         this.password = password;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getUsername() {

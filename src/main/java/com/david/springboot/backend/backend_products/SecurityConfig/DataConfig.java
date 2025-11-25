@@ -32,9 +32,9 @@ public class DataConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/v3/api-docs/**", "/user/register", "/user/login")
+                                "/v3/api-docs/**", "/api/user/register", "/api/user/login")
                         .permitAll()
-                        .requestMatchers("/api/products/**").authenticated()
+                        .requestMatchers("/api/products/**","/api/user/me").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
@@ -46,7 +46,7 @@ public class DataConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000", "http://localhost:8080")
+                        .allowedOrigins("http://localhost:3000", "http://localhost:64410")
                         .allowedHeaders("*")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowCredentials(true);

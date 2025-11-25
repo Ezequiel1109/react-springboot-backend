@@ -1,0 +1,19 @@
+# k8s/backend-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: springboot-products
+  labels:
+    app: backend-products
+    tier: backend
+spec:
+  type: ClusterIP  # Usar LoadBalancer si tu cluster lo soporta (Cloud)
+  ports:
+  - port: 80
+    targetPort: 9090
+    protocol: TCP
+    name: http
+  selector:
+    app: backend-products
+  sessionAffinity: ClientIP  # Sticky sessions para JWT

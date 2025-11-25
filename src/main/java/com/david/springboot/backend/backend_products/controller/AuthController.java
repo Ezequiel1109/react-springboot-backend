@@ -10,20 +10,29 @@ import io.swagger.v3.oas.annotations.media.*;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.david.springboot.backend.backend_products.DTOs.UserDTO;
 import com.david.springboot.backend.backend_products.SecurityConfig.JwtAuthFilter;
 import com.david.springboot.backend.backend_products.entities.User;
+import com.david.springboot.backend.backend_products.repositories.UserRepository;
 
 @RestController
-@CrossOrigin(origins = { "http://localhost:3000" })
-@RequestMapping("/user")
+@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:64410" })
+@RequestMapping("/api/user")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
@@ -94,5 +103,52 @@ public class AuthController {
                     .body("Error interno del servidor: " + e.getMessage());
         }
 
+    }
+    //Endpoint  for data user info
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(Authentication authentication) {  
+        log.info("Request: GET /api/user/me - obtener perfil de usuario");
+        try {
+            // Verificar autenticación
+            if (authentication == null || !authentication.isAuthenticated()) {
+                log.warn("Intento de acceso sin autenticación a /api/users/me");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Collections.singletonMap("message", "No autenticado"));
+            }
+
+            // Obtener email del token JWT (viene en authentication.getName())
+            String email = authentication.getName();
+            log.debug("Buscando usuario con email: {}", email);
+
+            // Buscar usuario en la base de datos
+            Optional<User> userOpt = userRepository.findByEmail(email);
+
+            if (userOpt.isPresent()) {
+                UserDTO userDTO = toDTO(userOpt.get());
+                log.info("Perfil de usuario obtenido exitosamente: {}", email);
+                return ResponseEntity.ok(userDTO);
+            } else {
+                log.warn("Usuario no encontrado en BD para email: {}", email);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("message", "Usuario no encontrado"));
+            }
+
+        } catch (Exception e) {
+            log.error("Error al obtener perfil de usuario", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("message", "Error interno del servidor"));
+        }
+    }
+
+    // Helper: convertir User a UserDTO (sin exponer password)
+    private UserDTO toDTO(User user) {
+        if (user == null) return null;
+        
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setEmail(user.getEmail());
+        dto.setUsername(user.getUsername());
+        // NO incluir password en el DTO
+        return dto;
     }
 }

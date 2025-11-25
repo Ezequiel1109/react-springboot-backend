@@ -1,0 +1,44 @@
+# .dockerignore
+# Archivos a ignorar al construir la imagen Docker
+# Build artifacts
+target/
+!target/*.jar
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Logs
+*.log
+logs/
+
+# Test
+src/test/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Kubernetes
+k8s/
+
+# Documentación
+*.md
+HELP.md
+
+# Scripts
+scripts/
+*.ps1
+*.bat
+
+# Otros
+.DS_Store
+node_modules/

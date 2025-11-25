@@ -1,0 +1,26 @@
+# k8s/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap
+  namespace: react-springboot-products
+data:
+  # configuracion de la aplicacion 
+  SERVER_PORT: "64410"
+  SPRING_PROFILES_ACTIVE: "development"
+
+  # configuracion de la base de datos
+  SPRING_DATASOURCE_URL: "jdbc:mysql://localhost:3306/db_backend_crud?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+
+  #configuracion de JPA/Hibernate
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "true"
+  SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: "org.hibernate.dialect.MySQLDialect"
+
+  # logging
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK: "INFO"
+  LOGGING_LEVEL_COM_DAVID_SPRINGBOOT: "DEBUG"
+
+  #jwt (tiempo de expiracion en milisegundos)
+  JWT_EXPIRATION: "86400000"

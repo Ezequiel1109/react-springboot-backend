@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p><w:r><w:t>Informe de cambios del proyecto - resumen detallado</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Objetivo: estabilizar la suite de tests (unitarios e integración), arrancar la aplicación y documentar los cambios realizados y cómo reproducirlos en Windows.</w:t></w:r></w:p>
+
+    <w:p><w:r><w:t>1) Resumen de acciones principales:</w:t></w:r></w:p>
+    <w:p><w:r><w:t>- Añadida restricción UNIQUE en `User.username` para que las pruebas de integración detecten duplicados en la base de datos.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>- Alineación de dependencias de test (JUnit BOM) y actualización de plugins `maven-surefire-plugin` / `maven-failsafe-plugin` para compatibilidad con JUnit 5.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>- Creado `run-tests.ps1` para ejecutar Maven desde PowerShell con las propiedades correctamente citadas (evita problemas con -D en Windows).</w:t></w:r></w:p>
+    <w:p><w:r><w:t>- Pruebas de integración usando Testcontainers y MySQL; verificación de arranque de contenedores y creación de esquema por Hibernate.</w:t></w:r></w:p>
+
+    <w:p><w:r><w:t>2) Resultado de ejecuciones</w:t></w:r></w:p>
+    <w:p><w:r><w:t>- `mvn verify -Dserver.port=9090` → Todos los tests (unit + IT) pasaron en la ejecución registrada. Testcontainers arrancó contenedores MySQL localmente.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>- La aplicación fue empaquetada (`target/backend-products-0.0.1-SNAPSHOT.jar`) y arrancada en esta sesión sobre el puerto 8080 (nota: previamente 8080 estaba ocupado, ver sección siguiente).</w:t></w:r></w:p>
+
+    <w:p><w:r><w:t>3) Conflicto de puerto 8080 (error observado)</w:t></w:r></w:p>
+    <w:p><w:r><w:t>- Mensaje: "Web server failed to start. Port 8080 was already in use."</w:t></w:r></w:p>
+    <w:p><w:r><w:t>- Acción tomada: busqué el proceso que escuchaba en 8080 en la máquina Windows. Resultado:</w:t></w:r></w:p>
+    <w:p><w:r><w:t>  • PID: 348</w:t></w:r></w:p>
+    <w:p><w:r><w:t>  • Nombre de imagen: java.exe</w:t></w:r></w:p>
+    <w:p><w:r><w:t>- Interpretación: un proceso Java estaba ocupando el puerto (posiblemente una instancia previa de la misma aplicación). Puedes terminar ese PID o cambiar el puerto de arranque de la aplicación.</w:t></w:r></w:p>
+
+    <w:p><w:r><w:t>4) Archivos modificados (detalles y evidencias)</w:t></w:r></w:p>
+
+    <w:p><w:r><w:t>- `src/main/java/com/david/springboot/backend/backend_products/entities/User.java`</w:t></w:r></w:p>
+    <w:p><w:r><w:t>  • Propósito: entidad JPA que representa usuarios.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>  • Cambio clave: se añadió la anotación en `username` para asegurar unicidad a nivel BD:</w:t></w:r></w:p>
+    <w:p><w:r><w:t>    @Column(nullable = false, unique = true, length = 100)</w:t></w:r></w:p>
+
+    <w:p><w:r><w:t>- `run-tests.ps1` (en la raíz del proyecto)</w:t></w:r></w:p>
+    <w:p><w:r><w:t>  • Propósito: wrapper PowerShell para ejecutar `mvn` con propiedades `-D` bien citadas.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>  • Uso: `.
+un-tests.ps1 -ServerPort 9090` o directamente `mvn "-Dsurefire.useFile=false" "-Dserver.port=9090" verify`.</w:t></w:r></w:p>
+
+    <w:p><w:r><w:t>- `pom.xml`</w:t></w:r></w:p>
+    <w:p><w:r><w:t>  • Propósito: gestión de dependencias y plugins de Maven.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>  • Cambios relevantes: importación de `junit-bom` para alinear versiones de JUnit 5, actualización de `maven-surefire-plugin` y `maven-failsafe-plugin` a versiones soportadas (3.5.4) y asegurada la compatibilidad con Testcontainers.</w:t></w:r></w:p>
+
+    <w:p><w:r><w:t>- Tests de integración</w:t></w:r></w:p>
+    <w:p><w:r><w:t>  • `ProductControllerMySqlIT`, `UserRepositoryTestcontainersIT`, `SimpleTestcontainersIT` — usan Testcontainers para lanzar MySQL y validan comportamiento de repositorios y controladores en un entorno real de BD.</w:t></w:r></w:p>
+
+    <w:p><w:r><w:t>5) Comandos para reproducir (PowerShell)</w:t></w:r></w:p>
+    <w:p><w:r><w:t>```powershell</w:t></w:r></w:p>
+    <w:p><w:r><w:t>mvn "-Dsurefire.useFile=false" "-Dserver.port=9090" verify</w:t></w:r></w:p>
+    <w:p><w:r><w:t>mvn -DskipTests package</w:t></w:r></w:p>
+    <w:p><w:r><w:t>java -jar target/backend-products-0.0.1-SNAPSHOT.jar --server.port=8080</w:t></w:r></w:p>
+    <w:p><w:r><w:t>netstat -aon | findstr ":8080"  # para identificar PID que usa 8080</w:t></w:r></w:p>
+  <w:p><w:r><w:t>tasklist /FI "PID eq &lt;PID&gt;"  # para ver el nombre del proceso</w:t></w:r></w:p>
+  <w:p><w:r><w:t>taskkill /PID &lt;PID&gt; /F  # si confirmas que quieres terminarlo</w:t></w:r></w:p>
+
+    <w:p><w:r><w:t>6) Recomendaciones</w:t></w:r></w:p>
+    <w:p><w:r><w:t>- Si 8080 debe estar disponible para la app, termina el PID identificado (PID: 348) siempre que no sea un proceso crítico para ti.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>- Alternativa segura: cambiar temporalmente el puerto de la app a 8081 o pasar `--server.port` al iniciar el JAR para evitar interrupciones.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>- En CI, evita conflictos de puerto usando propiedades por pipeline y/o ejecutando pruebas en contenedores aislados.</w:t></w:r></w:p>
+
+    <w:p><w:r><w:t>--- Fin del informe ampliado ---</w:t></w:r></w:p>
+  <w:p><w:r><w:t>Nota operativa: intenté arrancar la aplicación en el puerto 8081 para evitar el conflicto. PID del proceso arrancado: 13032. Los logs muestran un arranque correcto en el puerto 8081, aunque en esta sesión el proceso terminó posteriormente (graceful shutdown).</w:t></w:r></w:p>
+  <w:p><w:r><w:t>Cambio aplicado: `src/main/resources/application.properties` modificado para evitar conflictos de puerto con el IDE.</w:t></w:r></w:p>
+  <w:p><w:r><w:t>  • Ahora `server.port` usa la variable de entorno `SERVER_PORT` si está definida: `server.port=${SERVER_PORT:0}`.</w:t></w:r></w:p>
+  <w:p><w:r><w:t>  • Valor por defecto `0` hace que Spring asigne un puerto efímero libre, lo que evita que el arranque falle por "port already in use" en herramientas como Spring Boot Dashboard. Si prefieres un puerto fijo, establece `SERVER_PORT=8081` en tu entorno o edita el archivo y pon el puerto deseado.</w:t></w:r></w:p>
+    <w:sectPr/>
+  </w:body>
+</w:document>
